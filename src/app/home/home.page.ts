@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Storage } from '@ionic/storage';
+import { TaxService } from '../tax.service';
 
 @Component({
   selector: 'app-home',
@@ -7,11 +8,61 @@ import { Storage } from '@ionic/storage';
   styleUrls: ['home.page.scss'],
 })
 export class HomePage {
+  initData: any;
+  invoiceData: any;
 
-  constructor(private storage: Storage) { }
+  tax0: any;
+  tax1: any;
+
+  constructor(private storage: Storage, private taxService: TaxService) {
+    this.log();
+  }
+
+  async log() {
+    try {
+      const initData = await this.storage.get('zra_init_data');
+      const invoice_info = await this.storage.get('zra_invoice_data');
+      this.initData = JSON.parse(initData);
+      this.invoiceData = JSON.parse(invoice_info);
+      console.log('Init Data ' + this.initData);
+      console.log('Invoice Info' + this.invoiceData);
+
+      this.tax0 = await this.taxService.getTaxDetails('tax0', this.initData);
+      console.log('Tax0 - ' + JSON.stringify(this.tax0))
+
+      this.tax1 = await this.taxService.getTaxDetails('tax1', this.invoiceData);
+      console.log('Tax1 - ' + JSON.stringify(this.tax1))
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async saveTaxDetails() {
+    try {
+      if(!this.tax0) this.tax0 = {};
+      if(!this.tax1) this.tax1 = {};
+      this.tax0.data = this.initData;
+      const tax0 = await this.taxService.saveTaxDetails('tax2', this.tax0);
+      console.log('Tax2 - ' + JSON.stringify(tax0))
+
+      this.tax1.data = JSON.parse(this.invoiceData);
+      const tax1 = await this.taxService.saveTaxDetails('tax3', this.tax1);
+      console.log('Tax3 - ' + JSON.stringify(tax1))
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async saveInfo() {
+    try {
+      await this.log()
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   init() {
-    (<any> window).zposvefdplugin.efdInit(
+    (<any>window).zravefd.efdInit(
       (msg) => {
         console.log(msg);
 
@@ -30,33 +81,10 @@ export class HomePage {
 
   initVEFD(): Promise<any> {
     return new Promise(resolve => {
-      // let d: string;
-      // const data = `{\"license\":\"684821956905\",\"sn\":\"951711000831\",\"sw_version\":\"2.14\",
-      // \"model\":\"IS-100\",\"manufacture\":\"Inspur\",\"imei\":\"865740037141467\",\"os\":\"Linux2.6.36\",\"hw_sn\":\"\",\"id\":null}`;
-      const data1 = {
-        id: '010100000056',
-        secret: `MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBANt/
-        FkxwVwpZGIy2wRgSQPw/
-        fd4MpZnoVVaTDCDwSqQSgaJjwuLRJvIhJ1h+b85iEXI4xQDXYy6703lgPBiwPTJy21kcVlkA+
-        7MQx1QXuRiv6j2AJ7ZG4Kx/
-        5GEdKazrSgSb6XpS5BbheNiqSy9GdWvJTJgs6VhO3lfNanxhO5HDAgMBAAECgYEAly
-        LM8dkwtblfhBSapL587LOzMWA37t/hUvlxkoSigJMVnAFhQdiOHo7hjreQuOUh6ipYzBmC
-        +7ztAlhXSRChMYLzFcOYS2SrF0nLosOGT+R4dFOWyyfkv2V10KzAjL+v7gB+kTT/
-        pGmQNklwfEbxNpVqY9iGMGKn8v/h4CS067ECQQD004NkhKwVriaMuDX6dhWi8fXyZ+
-        1pF/KirbtVwWO1GJui58Kn4+6OJJZbjyU7CCbwfoaqeRN3jbV7ACiR7ZcdAkEA5YOgiRK6VgVPIQDOoQFpoCAn/
-        SY2UUDCbd5C6v4ram0aaRc4RwavUEA2IqDSX34HmPpmxQRIpgao+
-        L4smyQWXwJBAMryAnryl4upPv9rPCOQe0MFe7EjgWOanGFJzn65vqNB8NHLeEqf4QInRhRDxsL2cQDugUcS8pYp/
-        AQoD3lYD+kCQBISEwm318P+FwTaM2qp2c8puPxNjelH2AcegNZPvMtcW7/
-        6fAvbkuIWrCx9zRKHscFxtbW9aJrp21P6ZTix1rECQQC6Mui4chGh2/
-        g4d5fpiPhlt38ukZBdRya0zu35/nUWBa4BN1C/Pg3oL+xbWI+5d+JmISSpmf3ZNOUg73vDEnI6`,
-        code: 200,
-        desc: 'success'
-      };
-
       // console.log(encodedValue);
       const busid = 'R-R-01';
       const bus = {
-        license: '023020415552',
+        license: '595917741934',
         sn: 'ZPOS V-EFD',
         sw_version: '1.2',
         model: 'IP-100',
@@ -66,12 +94,17 @@ export class HomePage {
         hw_sn: '3458392322'
       };
 
-      (<any> window).zposvefdplugin.initVEFD('023020415552', bus, '20415552', busid,
+      // const bus = {id: '010100001142'};
+      (<any>window).zravefd.initVEFD(bus.license, bus, '', busid, '17741934',
+        //(<any> window).zravefd.initVEFD('023020415552', bus, data1.secret, 'R-R-02', data1.key,
         (msg) => {
           console.log('response ' + msg);
-          this.storage.set('zra_init_data', msg).then((res) => {
+          this.storage.set('zra_init_data', JSON.stringify(msg)).then((res) => {
+            this.taxService.saveTaxDetails("tax0", msg)
             console.log('ZRA Init data stored');
-          });
+          }).then(res => {
+            console.log('Saved to saver0 ' + JSON.stringify(res))
+          })
           // resolve(msg);
         },
         (err) => {
@@ -87,30 +120,33 @@ export class HomePage {
   *ZRA Tax information application
   *
   * */
-  taxInfo(): Promise<any> {
+  invoiceApplication(): Promise<any> {
     return new Promise(resolve => {
       let initData: any;
       let bid: string;
-      const busid = 'R-R-02';
+      const busid = 'INVOICE-APP-R';
       this.storage.get('zra_init_data').then(res => {
-        console.log('ZRA INIT DATA1 - ' + JSON.stringify(res));
-        // console.log('ZRA INIT DATA2 - ' + JSON.stringify(JSON.parse(res)));
+        console.log('ZRA INIT DATA1 - ' + res);
+        console.log('ZRA INIT DATA2 - ' + JSON.parse(res));
         initData = JSON.parse(res);
         console.log('ZRA INIT DATA1111 - ' + JSON.stringify(initData));
-        bid = initData.id;
+        bid = initData.content.id;
 
         const bus = {
           id: bid
         };
 
-        console.log('ID----' + initData.id);
-        (<any> window).zposvefdplugin.initVEFD(initData.id, bus, initData.secret, busid,
+        console.log('ID----' + initData.content.id);
+        console.log('Secret----' + initData.content.secret);
+        (<any>window).zravefd.callVEFD(initData.content.id, bus, initData.content.secret, busid, initData.key,
           (msg) => {
-            console.log('response ' + msg);
-
-            console.log('ZRA TaxInfo data stored' + JSON.stringify(JSON.parse(msg)));
-
-            // resolve(msg);
+            console.log('response ' + JSON.stringify(msg));
+            this.storage.set('zra_invoice_data', JSON.stringify(msg)).then((res) => {
+              console.log('ZRA Invoice data stored');
+              this.taxService.saveTaxDetails("tax1", msg)
+            }).then(res => {
+              console.log('Saved to saver1 ' + JSON.stringify(res))
+            })
           },
           (err) => {
             console.log(err);

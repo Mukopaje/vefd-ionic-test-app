@@ -9,6 +9,24 @@
 <ion-content>
   <div class="ion-padding">
     <ion-button color="primary" (click)="initVEFD()">Init VEFD</ion-button>
-    <ion-button color="secondary" (click)="taxInfo()">Get Tax Info</ion-button>
+    <ion-button color="secondary" (click)="invoiceApplication()">Get Invoices</ion-button>
+    <ion-button color="dark" (click)="saveTaxDetails()">Save Details</ion-button>
   </div>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col>{{invoiceData.invo}}</ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>
+       
+      </ion-col>
+      <ion-col>
+       
+      </ion-col>
+      <ion-col>
+       
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
